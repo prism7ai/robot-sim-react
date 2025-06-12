@@ -12,6 +12,7 @@ let [x, y] = start;
 const [gx, gy] = goal;
 
 
+
   while (x !== gx || y !== gy) {
     if (x < gx) x++;
     else if (x > gx) x--;
