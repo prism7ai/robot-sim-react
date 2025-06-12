@@ -1,20 +1,27 @@
 export function astar(start, goal, obstacles, size) {
-  console.log("start", start); // Add this at the top of astar and bug2
-
-if (!Array.isArray(start)) {
-  throw new Error("Start must be an array like [x, y]");
+  console.log("Start:", start, "Goal:", goal);
+  if (!Array.isArray(start) || start.length !== 2) {
+  throw new Error("Invalid start position. Expected [x, y]");
+}
+if (!Array.isArray(goal) || goal.length !== 2) {
+  throw new Error("Invalid goal position. Expected [x, y]");
 }
 
-  // Simple dummy straight line path (replace with real A* later)
   let path = [];
-  let [x, y] = start;
-  const [gx, gy] = goal;
+let [x, y] = start;
+const [gx, gy] = goal;
+
+
   while (x !== gx || y !== gy) {
     if (x < gx) x++;
     else if (x > gx) x--;
-    else if (y < gy) y++;
+
+    if (y < gy) y++;
     else if (y > gy) y--;
+
     path.push([x, y]);
   }
+
   return path;
 }
+

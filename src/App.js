@@ -18,10 +18,18 @@ export default function App() {
     else setObstacles([...obstacles, [x, y]]);
   };
 
-  const startSimulation = () => {
-    let path = algo === 'astar' ? astar(start, goal, obstacles, gridSize) : bug2(start, goal, obstacles, gridSize);
-    animatePath(path);
-  };
+ const startSimulation = () => {
+  if (!Array.isArray(start) || !Array.isArray(goal)) {
+    alert("Please select both a start and a goal cell before starting the simulation.");
+    return;
+  }
+
+  let path = algo === 'astar'
+    ? astar(start, goal, obstacles, gridSize)
+    : bug2(start, goal, obstacles, gridSize);
+
+  animatePath(path);
+};
 
   const animatePath = (path) => {
     let i = 0;
