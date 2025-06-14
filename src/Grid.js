@@ -1,23 +1,29 @@
 import React from 'react';
-import './App.css';
 
 export default function Grid({ gridSize, grid, onCellClick }) {
-  const renderGrid = () => {
-    return [...Array(gridSize)].map((_, x) =>
-      <div key={x} className="row">
-        {[...Array(gridSize)].map((_, y) => {
-          let cellType = grid[x]?.[y] || '';
-          return (
-            <div
-              key={y}
-              className={`cell ${cellType}`}
-              onClick={() => onCellClick(x, y)}
-            />
-          );
-        })}
-      </div>
-    );
-  };
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${gridSize}, 30px)` }}>
+      {[...Array(gridSize)].map((_, x) =>
+        [...Array(gridSize)].map((_, y) => {
+          let color = 'white';
+          const cell = grid[x]?.[y];
+          if (cell === 'start') color = 'green';
+          else if (cell === 'goal') color = 'red';
+          else if (cell === 'obstacle') color = 'black';
+          else if (cell === 'robot') color = '#87CEFA';
 
-  return <div className="grid">{renderGrid()}</div>;
+          return (
+            <div key={`${x}-${y}`}
+              onClick={() => onCellClick(x, y)}
+              style={{
+                width: 30,
+                height: 30,
+                border: '1px solid #ccc',
+                backgroundColor: color
+              }} />
+          );
+        })
+      )}
+    </div>
+  );
 }
