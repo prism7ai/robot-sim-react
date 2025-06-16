@@ -1,94 +1,189 @@
-
 import React, { useState } from 'react';
-import './App.css';
 import Grid from './components/Grid';
+import html2canvas from 'html2canvas';
 import ControlPanel from './components/ControlPanel';
+import ResultsPanel from './components/ResultsPanel';
 import { bfs } from './algorithms/bfs';
 import { dfs } from './algorithms/dfs';
 import { astar } from './algorithms/astar';
 import { dijkstra } from './algorithms/dijkstra';
 
-function App() {
-  const gridSize = 10;
-  const [start, setStart] = useState(null);
-  const [goal, setGoal] = useState(null);
+export default function App() {
+  const [gridSize] = useState(10);
+  const [grid, setGrid] = useState([]);
+  const [start, setStart] = useState([]); // initially empty
+  const [goal, setGoal] = useState([]);   // initially empty
   const [obstacles, setObstacles] = useState([]);
+  const [algo, setAlgo] = useState('bfs');
   const [mode, setMode] = useState('start');
-  const [algo, setAlgo] = useState('');
-  const [visited, setVisited] = useState([]);
   const [path, setPath] = useState([]);
+  const [visited, setVisited] = useState([]);
+  const [metrics, setMetrics] = useState({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
 
   const handleCellClick = (x, y) => {
-    const pos = [x, y];
-    if (mode === 'start') setStart(pos);
-    else if (mode === 'goal') setGoal(pos);
+    if (mode === 'start') setStart([x, y]);
+    else if (mode === 'goal') setGoal([x, y]);
     else if (mode === 'obstacle') {
-      const exists = obstacles.some(([ox, oy]) => ox === x && oy === y);
-      if (!exists) setObstacles([...obstacles, pos]);
+      if (!obstacles.some(([ox, oy]) => ox === x && oy === y)) {
+        setObstacles([...obstacles, [x, y]]);
+      }
     }
   };
 
-  const startSimulation = () => {
-    if (!start || !goal) {
-      alert('Please set both start and goal points!');
+  const startSimulation = async () => {
+    if (!Array.isArray(start) || !Array.isArray(goal)) {
+      alert("Please set both Start and Goal points.");
       return;
     }
 
-    let result = { visited: [], path: [] };
+    let result = { path: [], visited: [] };
+    const t0 = performance.now();
+
     if (algo === 'bfs') result = bfs(start, goal, obstacles, gridSize);
     else if (algo === 'dfs') result = dfs(start, goal, obstacles, gridSize);
     else if (algo === 'astar') result = astar(start, goal, obstacles, gridSize);
     else if (algo === 'dijkstra') result = dijkstra(start, goal, obstacles, gridSize);
 
-    animateExploration(result.visited, result.path);
+    const t1 = performance.now();
+    const elapsedTime = (t1 - t0) / 1000;
+
+    setMetrics({
+      visitedCount: result.visited.length,
+      pathLength: result.path.length,
+      timeTaken: elapsedTime
+    });
+
+    setPath(result.path || []);
+    setVisited(result.visited || []);
+    animatePath(result.path || []);
+
+    try {
+      await fetch('http://localhost:4000/save-path', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          algorithm: algo.toUpperCase(),
+          start,
+          goal,
+          obstacles,
+          path: result.path,
+          visitedCount: result.visited.length,
+          pathLength: result.path.length,
+          timeTaken: elapsedTime
+        })
+      });
+      console.log('✅ Path saved to MySQL');
+    } catch (error) {
+      console.error('❌ Error saving path:', error);
+    }
   };
 
-  const animateExploration = (visitedNodes, finalPath) => {
+  const animatePath = (path = []) => {
     let i = 0;
-    const exploreInterval = setInterval(() => {
-      if (i >= visitedNodes.length) {
-        clearInterval(exploreInterval);
-        animatePath(finalPath);
+    const interval = setInterval(() => {
+      if (i >= path.length) {
+        clearInterval(interval);
         return;
       }
-      setVisited(visitedNodes.slice(0, i + 1));
-      i++;
-    }, 50);
-  };
 
-  const animatePath = (finalPath) => {
-    let i = 0;
-    const pathInterval = setInterval(() => {
-      if (i >= finalPath.length) return clearInterval(pathInterval);
-      setPath(finalPath.slice(0, i + 1));
+      setGrid(() => {
+        const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(''));
+        for (const [ox, oy] of obstacles) newGrid[ox][oy] = 'obstacle';
+        if (Array.isArray(start)) newGrid[start[0]][start[1]] = 'start';
+        if (Array.isArray(goal)) newGrid[goal[0]][goal[1]] = 'goal';
+
+       if (Array.isArray(path[i]) && path[i].length === 2) {
+  const [x, y] = path[i];
+  newGrid[x][y] = 'robot';
+}
+        return newGrid;
+      });
+
       i++;
     }, 100);
   };
 
+  const exportJSON = () => {
+    const data = {
+      algorithm: algo.toUpperCase(),
+      start,
+      goal,
+      obstacles,
+      path,
+      visited,
+      timestamp: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `path-${algo}-${Date.now()}.json`;
+    a.click();
+  };
+
+  const exportGridAsImage = () => {
+    const gridElement = document.getElementById('grid-snapshot');
+    if (!gridElement) return;
+
+    html2canvas(gridElement).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `grid-${algo}-${Date.now()}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    });
+  };
+
   return (
-    <div className="App">
-      <h1>Robot Pathfinding Simulator</h1>
+    <div>
+      <h2 style={{ textAlign: 'center', marginTop: '20px' }}>
+        NAVX - Robot Pathfinding Simulator
+      </h2>
+
       <ControlPanel
-        setMode={setMode}
-        setAlgo={setAlgo}
         algo={algo}
+        setAlgo={setAlgo}
+        setMode={setMode}
         startSimulation={startSimulation}
+        onClear={() => {
+  setStart([]);
+  setGoal([]);
+  setObstacles([]);
+  setPath([]);
+  setVisited([]);
+  setGrid([]);
+  setMetrics({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
+}}
+
+        onExport={exportJSON}
+        onExportGrid={exportGridAsImage}
       />
-      <Grid
-        gridSize={gridSize}
-        start={start}
-        goal={goal}
-        obstacles={obstacles}
-        path={path}
-        visited={visited}
-        onCellClick={handleCellClick}
-      />
-      <div style={{ marginTop: '20px' }}>
-        <p><strong>Explored Nodes:</strong> {visited.length}</p>
-        <p><strong>Shortest Path Length:</strong> {path.length}</p>
+
+      <div id="grid-snapshot">
+        <Grid
+          gridSize={gridSize}
+          grid={grid}
+          start={start}
+          goal={goal}
+          obstacles={obstacles}
+          path={path}
+          visited={visited}
+          onCellClick={handleCellClick}
+        />
       </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+        <ResultsPanel
+          algorithm={algo.toUpperCase()}
+          visitedCount={metrics.visitedCount}
+          pathLength={metrics.pathLength}
+          timeTaken={metrics.timeTaken}
+        />
+      </div>
+
+      <p style={{ textAlign: 'center', marginTop: '40px', fontSize: '14px', color: '#777' }}>
+        Built with ❤️ by Team NAVX
+      </p>
     </div>
   );
 }
-
-export default App;

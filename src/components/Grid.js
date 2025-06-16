@@ -1,15 +1,14 @@
 import React from 'react';
 import '../App.css';
- // Optional, if not already globally imported
 
-export default function Grid({ gridSize, start, goal, obstacles, path, onCellClick }) {
+export default function Grid({ gridSize, start, goal, obstacles = [], path = [], onCellClick }) {
   const getCellType = (x, y) => {
-    if (start && x === start[0] && y === start[1]) return 'start';
-    if (goal && x === goal[0] && y === goal[1]) return 'goal';
-    if (obstacles.some(([ox, oy]) => ox === x && oy === y)) return 'obstacle';
-    if (path.some(([px, py]) => px === x && py === y)) return 'robot';
-    return '';
-  };
+  if (Array.isArray(start) && x === start[0] && y === start[1]) return 'start';
+  if (Array.isArray(goal) && x === goal[0] && y === goal[1]) return 'goal';
+  if (Array.isArray(obstacles) && obstacles.some(([ox, oy]) => ox === x && oy === y)) return 'obstacle';
+  if (Array.isArray(path) && path.some(([px, py]) => px === x && py === y)) return 'robot';
+  return '';
+};
 
   return (
     <div className="grid-container">
