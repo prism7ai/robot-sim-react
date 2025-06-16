@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import './App.css';
 import Grid from './components/Grid';
@@ -14,6 +15,7 @@ function App() {
   const [obstacles, setObstacles] = useState([]);
   const [mode, setMode] = useState('start');
   const [algo, setAlgo] = useState('');
+  const [visited, setVisited] = useState([]);
   const [path, setPath] = useState([]);
 
   const handleCellClick = (x, y) => {
@@ -32,21 +34,33 @@ function App() {
       return;
     }
 
-    let path = [];
+    let result = { visited: [], path: [] };
+    if (algo === 'bfs') result = bfs(start, goal, obstacles, gridSize);
+    else if (algo === 'dfs') result = dfs(start, goal, obstacles, gridSize);
+    else if (algo === 'astar') result = astar(start, goal, obstacles, gridSize);
+    else if (algo === 'dijkstra') result = dijkstra(start, goal, obstacles, gridSize);
 
-    if (algo === 'bfs') path = bfs(start, goal, obstacles, gridSize);
-    else if (algo === 'dfs') path = dfs(start, goal, obstacles, gridSize);
-    else if (algo === 'astar') path = astar(start, goal, obstacles, gridSize);
-    else if (algo === 'dijkstra') path = dijkstra(start, goal, obstacles, gridSize);
-
-    animatePath(path);
+    animateExploration(result.visited, result.path);
   };
 
-  const animatePath = (path) => {
+  const animateExploration = (visitedNodes, finalPath) => {
     let i = 0;
-    const interval = setInterval(() => {
-      if (i >= path.length) return clearInterval(interval);
-      setPath(path.slice(0, i + 1));
+    const exploreInterval = setInterval(() => {
+      if (i >= visitedNodes.length) {
+        clearInterval(exploreInterval);
+        animatePath(finalPath);
+        return;
+      }
+      setVisited(visitedNodes.slice(0, i + 1));
+      i++;
+    }, 50);
+  };
+
+  const animatePath = (finalPath) => {
+    let i = 0;
+    const pathInterval = setInterval(() => {
+      if (i >= finalPath.length) return clearInterval(pathInterval);
+      setPath(finalPath.slice(0, i + 1));
       i++;
     }, 100);
   };
@@ -66,8 +80,13 @@ function App() {
         goal={goal}
         obstacles={obstacles}
         path={path}
+        visited={visited}
         onCellClick={handleCellClick}
       />
+      <div style={{ marginTop: '20px' }}>
+        <p><strong>Explored Nodes:</strong> {visited.length}</p>
+        <p><strong>Shortest Path Length:</strong> {path.length}</p>
+      </div>
     </div>
   );
 }
