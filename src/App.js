@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Grid from './components/Grid';
 import html2canvas from 'html2canvas';
 import ControlPanel from './components/ControlPanel';
 import ResultsPanel from './components/ResultsPanel';
+import ResultsTable from './components/ResultsTable';
+
 import { bfs } from './algorithms/bfs';
 import { dfs } from './algorithms/dfs';
 import { astar } from './algorithms/astar';
@@ -10,15 +12,25 @@ import { dijkstra } from './algorithms/dijkstra';
 
 export default function App() {
   const [gridSize] = useState(10);
-  const [grid, setGrid] = useState([]);
-  const [start, setStart] = useState([]); // initially empty
-  const [goal, setGoal] = useState([]);   // initially empty
+  const [grid, setGrid] = useState(
+  Array.from({ length: 10 }, () => Array(10).fill(''))
+);
+  const [start, setStart] = useState([0, 0]);
+  const [goal, setGoal] = useState([9, 9]);
   const [obstacles, setObstacles] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [algo, setAlgo] = useState('bfs');
   const [mode, setMode] = useState('start');
   const [path, setPath] = useState([]);
   const [visited, setVisited] = useState([]);
   const [metrics, setMetrics] = useState({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
+
+  // ✅ UseEffect to log grid (resolve eslint unused-vars warning)
+  useEffect(() => {
+    if (grid.length > 0) {
+      console.log("Grid updated:", grid);
+    }
+  }, [grid]);
 
   const handleCellClick = (x, y) => {
     if (mode === 'start') setStart([x, y]);
@@ -31,7 +43,7 @@ export default function App() {
   };
 
   const startSimulation = async () => {
-    if (!Array.isArray(start) || !Array.isArray(goal)) {
+    if (!Array.isArray(start) || !Array.isArray(goal) || start.length !== 2 || goal.length !== 2) {
       alert("Please set both Start and Goal points.");
       return;
     }
@@ -73,35 +85,41 @@ export default function App() {
         })
       });
       console.log('✅ Path saved to MySQL');
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error('❌ Error saving path:', error);
     }
   };
 
   const animatePath = (path = []) => {
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i >= path.length) {
-        clearInterval(interval);
-        return;
-      }
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i >= path.length) {
+      clearInterval(interval);
+      return;
+    }
 
-      setGrid(() => {
-        const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(''));
-        for (const [ox, oy] of obstacles) newGrid[ox][oy] = 'obstacle';
-        if (Array.isArray(start)) newGrid[start[0]][start[1]] = 'start';
-        if (Array.isArray(goal)) newGrid[goal[0]][goal[1]] = 'goal';
-
-       if (Array.isArray(path[i]) && path[i].length === 2) {
-  const [x, y] = path[i];
-  newGrid[x][y] = 'robot';
-}
-        return newGrid;
-      });
-
+    const step = path[i];
+    if (!Array.isArray(step) || step.length !== 2) {
       i++;
-    }, 100);
-  };
+      return;
+    }
+
+    setGrid(() => {
+      const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(''));
+      for (const [ox, oy] of obstacles) newGrid[ox][oy] = 'obstacle';
+      if (Array.isArray(start) && start.length === 2) newGrid[start[0]][start[1]] = 'start';
+      if (Array.isArray(goal) && goal.length === 2) newGrid[goal[0]][goal[1]] = 'goal';
+
+      const [x, y] = step;
+      newGrid[x][y] = 'robot';
+      return newGrid;
+    });
+
+    i++;
+  }, 100);
+};
+
 
   const exportJSON = () => {
     const data = {
@@ -146,15 +164,14 @@ export default function App() {
         setMode={setMode}
         startSimulation={startSimulation}
         onClear={() => {
-  setStart([]);
-  setGoal([]);
-  setObstacles([]);
-  setPath([]);
-  setVisited([]);
-  setGrid([]);
-  setMetrics({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
-}}
-
+          setStart([0, 0]);
+          setGoal([9, 9]);
+          setObstacles([]);
+          setPath([]);
+          setVisited([]);
+          setGrid([]);
+          setMetrics({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
+        }}
         onExport={exportJSON}
         onExportGrid={exportGridAsImage}
       />
@@ -180,6 +197,9 @@ export default function App() {
           timeTaken={metrics.timeTaken}
         />
       </div>
+
+     <ResultsTable refreshKey={refreshKey} />
+
 
       <p style={{ textAlign: 'center', marginTop: '40px', fontSize: '14px', color: '#777' }}>
         Built with ❤️ by Team NAVX

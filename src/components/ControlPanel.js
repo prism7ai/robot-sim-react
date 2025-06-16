@@ -1,52 +1,61 @@
 import React from 'react';
 
-export default function ControlPanel({ setMode, setAlgo, startSimulation, algo, onClear, onExport, onExportGrid }) {
-
-
+export default function ControlPanel({
+  algo,
+  setAlgo,
+  setMode,
+  startSimulation,
+  onClear,
+  onExport,
+  onExportGrid
+}) {
   return (
-    <div style={{ 
-      display: 'flex', 
+    <div style={{
+      margin: '20px auto',
+      display: 'flex',
       flexWrap: 'wrap',
-      gap: '10px', 
-      justifyContent: 'center', 
-      margin: '20px 0'
+      gap: '10px',
+      justifyContent: 'center',
+      maxWidth: '700px'
     }}>
+      {/* Mode buttons */}
       <button onClick={() => setMode('start')}>Set Start</button>
       <button onClick={() => setMode('goal')}>Set Goal</button>
       <button onClick={() => setMode('obstacle')}>Add Obstacle</button>
 
+      {/* Algorithm selection */}
       <button
         onClick={() => setAlgo('bfs')}
-        style={{ backgroundColor: algo === 'bfs' ? '#4caf50' : '' }}
-      >BFS</button>
-
+        style={{ backgroundColor: algo === 'bfs' ? '#333' : '' }}
+      >
+        BFS
+      </button>
       <button
         onClick={() => setAlgo('dfs')}
-        style={{ backgroundColor: algo === 'dfs' ? '#4caf50' : '' }}
-      >DFS</button>
-
+        style={{ backgroundColor: algo === 'dfs' ? '#333' : '' }}
+      >
+        DFS
+      </button>
       <button
         onClick={() => setAlgo('astar')}
-        style={{ backgroundColor: algo === 'astar' ? '#4caf50' : '' }}
-      >A*</button>
-
+        style={{ backgroundColor: algo === 'astar' ? '#333' : '' }}
+      >
+        A*
+      </button>
       <button
         onClick={() => setAlgo('dijkstra')}
-        style={{ backgroundColor: algo === 'dijkstra' ? '#4caf50' : '' }}
-      >Dijkstra</button>
+        style={{ backgroundColor: algo === 'dijkstra' ? '#333' : '' }}
+      >
+        Dijkstra
+      </button>
 
-      <button onClick={startSimulation} style={{ fontWeight: 'bold' }}>Simulate</button>
-      <button onClick={onClear} style={{ backgroundColor: '#ff4d4d', color: 'white' }}>
-  Clear Grid
-</button>
-<button onClick={onExport} style={{ backgroundColor: '#607d8b', color: 'white' }}>
-  Export JSON
-</button>
-
-<button onClick={onExportGrid} style={{ backgroundColor: '#795548', color: 'white' }}>
-    Export Grid as Image
-  </button>
-
+      {/* Action buttons */}
+      <button onClick={startSimulation} style={{ backgroundColor: '#007bff', color: 'white' }}>
+        Simulate
+      </button>
+      <button onClick={onClear}>Clear</button>
+      <button onClick={onExport}>Export JSON</button>
+      <button onClick={onExportGrid}>Download Grid</button>
     </div>
   );
 }
