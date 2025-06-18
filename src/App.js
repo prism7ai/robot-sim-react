@@ -12,24 +12,21 @@ import { dijkstra } from './algorithms/dijkstra';
 
 export default function App() {
   const [gridSize] = useState(10);
-  const [grid, setGrid] = useState(
-  Array.from({ length: 10 }, () => Array(10).fill(''))
-);
+  const [grid, setGrid] = useState([]);
   const [start, setStart] = useState([0, 0]);
   const [goal, setGoal] = useState([9, 9]);
   const [obstacles, setObstacles] = useState([]);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [algo, setAlgo] = useState('bfs');
   const [mode, setMode] = useState('start');
   const [path, setPath] = useState([]);
   const [visited, setVisited] = useState([]);
   const [metrics, setMetrics] = useState({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
+  const [resultsVersion, setResultsVersion] = useState(0);
 
-  // ✅ UseEffect to log grid (resolve eslint unused-vars warning)
+  const BACKEND_URL = 'https://robot-sim-react-production.up.railway.app';
+
   useEffect(() => {
-    if (grid.length > 0) {
-      console.log("Grid updated:", grid);
-    }
+    if (grid.length > 0) console.log('Grid updated:', grid);
   }, [grid]);
 
   const handleCellClick = (x, y) => {
@@ -70,7 +67,7 @@ export default function App() {
     animatePath(result.path || []);
 
     try {
-      await fetch('http://localhost:4000/save-path', {
+      await fetch(`${BACKEND_URL}/save-path`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -84,42 +81,34 @@ export default function App() {
           timeTaken: elapsedTime
         })
       });
-      console.log('✅ Path saved to MySQL');
-      setRefreshKey(prev => prev + 1);
-    } catch (error) {
-      console.error('❌ Error saving path:', error);
+      console.log('✅ Path saved to PostgreSQL (Railway)');
+      setResultsVersion(prev => prev + 1);
+    } catch (err) {
+      console.error('❌ Error saving path:', err);
     }
   };
 
   const animatePath = (path = []) => {
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i >= path.length) {
-      clearInterval(interval);
-      return;
-    }
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= path.length) {
+        clearInterval(interval);
+        return;
+      }
 
-    const step = path[i];
-    if (!Array.isArray(step) || step.length !== 2) {
+      setGrid(() => {
+        const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(''));
+        for (const [ox, oy] of obstacles) newGrid[ox][oy] = 'obstacle';
+        if (Array.isArray(start)) newGrid[start[0]][start[1]] = 'start';
+        if (Array.isArray(goal)) newGrid[goal[0]][goal[1]] = 'goal';
+        const [x, y] = path[i];
+        newGrid[x][y] = 'robot';
+        return newGrid;
+      });
+
       i++;
-      return;
-    }
-
-    setGrid(() => {
-      const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(''));
-      for (const [ox, oy] of obstacles) newGrid[ox][oy] = 'obstacle';
-      if (Array.isArray(start) && start.length === 2) newGrid[start[0]][start[1]] = 'start';
-      if (Array.isArray(goal) && goal.length === 2) newGrid[goal[0]][goal[1]] = 'goal';
-
-      const [x, y] = step;
-      newGrid[x][y] = 'robot';
-      return newGrid;
-    });
-
-    i++;
-  }, 100);
-};
-
+    }, 100);
+  };
 
   const exportJSON = () => {
     const data = {
@@ -198,8 +187,7 @@ export default function App() {
         />
       </div>
 
-     <ResultsTable refreshKey={refreshKey} />
-
+      <ResultsTable version={resultsVersion} />
 
       <p style={{ textAlign: 'center', marginTop: '40px', fontSize: '14px', color: '#777' }}>
         Built with ❤️ by Team NAVX
