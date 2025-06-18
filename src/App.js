@@ -23,7 +23,9 @@ export default function App() {
   const [visited, setVisited] = useState([]);
   const [metrics, setMetrics] = useState({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
   const [resultsVersion, setResultsVersion] = useState(0);
-  const BACKEND_URL = 'https://robot-sim-react-production.up.railway.app';
+
+  const BACKEND_URL = 'https://centerbeam.proxy.rlwy.net';
+
   const handleCellClick = (x, y) => {
     if (mode === 'start') setStart([x, y]);
     else if (mode === 'goal') setGoal([x, y]);
