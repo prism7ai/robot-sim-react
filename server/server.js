@@ -4,7 +4,10 @@ const cors = require('cors');
 const { Pool } = require('pg');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://robot-sim-react.vercel.app'], // add your Vercel domain
+  credentials: true
+}));
 app.use(express.json());
 
 // PostgreSQL connection via Railway or local .env

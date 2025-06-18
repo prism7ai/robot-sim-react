@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Grid from './components/Grid';
 import html2canvas from 'html2canvas';
 import ControlPanel from './components/ControlPanel';
@@ -12,7 +12,8 @@ import { dijkstra } from './algorithms/dijkstra';
 
 export default function App() {
   const [gridSize] = useState(10);
-  const [grid, setGrid] = useState([]);
+  const [grid, setGrid] = useState(() =>
+  Array.from({ length: 10 }, () => Array(10).fill(''))); 
   const [start, setStart] = useState([0, 0]);
   const [goal, setGoal] = useState([9, 9]);
   const [obstacles, setObstacles] = useState([]);
