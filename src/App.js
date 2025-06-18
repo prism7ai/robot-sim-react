@@ -22,13 +22,7 @@ export default function App() {
   const [visited, setVisited] = useState([]);
   const [metrics, setMetrics] = useState({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
   const [resultsVersion, setResultsVersion] = useState(0);
-
   const BACKEND_URL = 'https://robot-sim-react-production.up.railway.app';
-
-  useEffect(() => {
-    if (grid.length > 0) console.log('Grid updated:', grid);
-  }, [grid]);
-
   const handleCellClick = (x, y) => {
     if (mode === 'start') setStart([x, y]);
     else if (mode === 'goal') setGoal([x, y]);
@@ -81,7 +75,7 @@ export default function App() {
           timeTaken: elapsedTime
         })
       });
-      console.log('✅ Path saved to PostgreSQL (Railway)');
+      console.log('✅ Path saved to Railway PostgreSQL');
       setResultsVersion(prev => prev + 1);
     } catch (err) {
       console.error('❌ Error saving path:', err);
@@ -101,8 +95,12 @@ export default function App() {
         for (const [ox, oy] of obstacles) newGrid[ox][oy] = 'obstacle';
         if (Array.isArray(start)) newGrid[start[0]][start[1]] = 'start';
         if (Array.isArray(goal)) newGrid[goal[0]][goal[1]] = 'goal';
-        const [x, y] = path[i];
-        newGrid[x][y] = 'robot';
+
+        const coords = path[i];
+        if (Array.isArray(coords)) {
+          const [x, y] = coords;
+          newGrid[x][y] = 'robot';
+        }
         return newGrid;
       });
 
