@@ -77,7 +77,7 @@ export default function App() {
           timeTaken: elapsedTime
         })
       });
-      console.log('✅ Path saved to Railway PostgreSQL');
+      console.log('✅ Path saved to Railway MySQL');
       setResultsVersion(prev => prev + 1);
     } catch (err) {
       console.error('❌ Error saving path:', err);
