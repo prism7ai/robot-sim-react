@@ -1,53 +1,81 @@
 require('dotenv').config();
 const express = require('express');
+const mysql = require('mysql2'); 
+// const db = mysql.createConnection({
+//   host: 'sql12.freesqldatabase.com',              // or whatever host is listed
+//   user: 'sql12785569',           // replace with correct user
+//   password: 'pRM6sMIJrN',     // be exact
+//   database: 'sql12785569',        // exactly as shown
+//   port: 3306
+// });
+
 const cors = require('cors');
-const { Pool } = require('pg');
+const PORT = process.env.PORT || 4000;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Use DATABASE_URL only
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+// MySQL config
+
+const db = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
 
-app.post('/save-path', async (req, res) => {
+db.connect(err => {
+  if (err) {
+    console.error('❌ MySQL connection failed:', err);
+  } else {
+    console.log('✅ Connected to MySQL');
+  }
+});
+
+// Save a simulation result
+app.post('/save-path', (req, res) => {
   const { algorithm, start, goal, obstacles, path, visitedCount, pathLength, timeTaken } = req.body;
+
   const sql = `
-    INSERT INTO paths_new (algorithm, start_point, goal_point, obstacles, path, visited_count, path_length, time_taken)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    INSERT INTO paths 
+    (algorithm, start_point, goal_point, obstacles, path, visited_count, path_length, time_taken)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
-  try {
-    await pool.query(sql, [
-      algorithm,
-      JSON.stringify(start),
-      JSON.stringify(goal),
-      JSON.stringify(obstacles),
-      JSON.stringify(path),
-      visitedCount,
-      pathLength,
-      timeTaken
-    ]);
-    res.send({ message: '✅ Saved to PostgreSQL' });
-  } catch (err) {
-    console.error('❌ Insert failed:', err);
-    res.status(500).send('Insert failed');
-  }
+  db.query(sql, [
+    algorithm,
+    JSON.stringify(start),
+    JSON.stringify(goal),
+    JSON.stringify(obstacles),
+    JSON.stringify(path),
+    visitedCount,
+    pathLength,
+    timeTaken
+  ], (err) => {
+    if (err) {
+      console.error('❌ Insert failed:', err);
+      res.status(500).send('Insert failed');
+    } else {
+      res.send({ message: '✅ Saved successfully' });
+    }
+  });
 });
 
-app.get('/results', async (req, res) => {
-  try {
-    const result = await pool.query(`SELECT * FROM paths_new ORDER BY id DESC LIMIT 10`);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('❌ Fetch failed:', err);
-    res.status(500).send('Fetch failed');
-  }
+// Fetch all past results
+app.get('/results', (req, res) => {
+  const sql = `SELECT * FROM paths ORDER BY id DESC LIMIT 10`; // Show latest 10 results
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error('❌ Error fetching results:', err);
+      return res.status(500).send('Error fetching results');
+    }
+    res.json(results);
+  });
 });
 
+
+// Start server
 app.listen(4000, () => {
-  console.log('🚀 Server running on http://localhost:4000');
+  console.log('🚀 Backend running at http://localhost:4000');
 });
