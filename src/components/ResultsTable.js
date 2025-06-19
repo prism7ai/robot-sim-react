@@ -5,7 +5,7 @@ export default function ResultsTable({ version }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('https://robot-sim-react-production-7703.up.railway.app/results')
+    fetch('https://navx-backend-production.up.railway.app/results')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch');
         return res.json();

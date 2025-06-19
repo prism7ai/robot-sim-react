@@ -63,7 +63,7 @@ export default function App() {
     animatePath(result.path || []);
 
     try {
-      await fetch(`https://robot-sim-react-production-7703.up.railway.app/save-path`, {
+      await fetch(`https://navx-backend-production.up.railway.app/save-path`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -77,7 +77,7 @@ export default function App() {
           timeTaken: elapsedTime
         })
       });
-      console.log('✅ Path saved to Railway PostgreSQL');
+      console.log('✅ Path saved to Railway MySQL');
       setResultsVersion(prev => prev + 1);
     } catch (err) {
       console.error('❌ Error saving path:', err);
