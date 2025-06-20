@@ -20,9 +20,10 @@ export default function App() {
   const [mode, setMode] = useState('start');
   const [path, setPath] = useState([]);
   const [visited, setVisited] = useState([]);
-  const [metrics, setMetrics] = useState({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
+  const [metrics, setMetrics] = useState({ pathLength: 0, timeTaken: 0 });
   const [resultsVersion, setResultsVersion] = useState(0);
-  const BACKEND_URL = 'https://robot-sim-react-production-7703.up.railway.app';
+
+  const BACKEND_URL = 'https://mysql-production-114a.up.railway.app';
 
   const handleCellClick = (x, y) => {
     if (mode === 'start') setStart([x, y]);
@@ -52,7 +53,6 @@ export default function App() {
     const elapsedTime = (t1 - t0) / 1000;
 
     setMetrics({
-      visitedCount: result.visited.length,
       pathLength: result.path.length,
       timeTaken: elapsedTime
     });
@@ -76,8 +76,8 @@ export default function App() {
           timeTaken: elapsedTime
         })
       });
-      setResultsVersion(prev => prev + 1);
-      console.log('✅ Path saved to Railway PostgreSQL');
+      console.log('✅ Path saved to MySQL');
+      setResultsVersion(v => v + 1);
     } catch (err) {
       console.error('❌ Error saving path:', err);
     }
@@ -94,10 +94,14 @@ export default function App() {
       setGrid(() => {
         const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(''));
         for (const [ox, oy] of obstacles) newGrid[ox][oy] = 'obstacle';
-        newGrid[start[0]][start[1]] = 'start';
-        newGrid[goal[0]][goal[1]] = 'goal';
-        const [x, y] = path[i];
-        newGrid[x][y] = 'robot';
+        if (Array.isArray(start)) newGrid[start[0]][start[1]] = 'start';
+        if (Array.isArray(goal)) newGrid[goal[0]][goal[1]] = 'goal';
+
+        const coords = path[i];
+        if (Array.isArray(coords)) {
+          const [x, y] = coords;
+          newGrid[x][y] = 'robot';
+        }
         return newGrid;
       });
 
@@ -138,7 +142,9 @@ export default function App() {
 
   return (
     <div>
-      <h2 style={{ textAlign: 'center', marginTop: '20px' }}>NAVX - Robot Pathfinding Simulator</h2>
+      <h2 style={{ textAlign: 'center', marginTop: '20px' }}>
+        NAVX - Robot Pathfinding Simulator
+      </h2>
 
       <ControlPanel
         algo={algo}
@@ -152,7 +158,7 @@ export default function App() {
           setPath([]);
           setVisited([]);
           setGrid([]);
-          setMetrics({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
+          setMetrics({ pathLength: 0, timeTaken: 0 });
         }}
         onExport={exportJSON}
         onExportGrid={exportGridAsImage}
@@ -174,7 +180,6 @@ export default function App() {
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
         <ResultsPanel
           algorithm={algo.toUpperCase()}
-          visitedCount={metrics.visitedCount}
           pathLength={metrics.pathLength}
           timeTaken={metrics.timeTaken}
         />

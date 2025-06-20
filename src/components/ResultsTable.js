@@ -5,7 +5,7 @@ export default function ResultsTable({ version }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('https://postgres-production-c633.up.railway.app/results')
+    fetch('https://mysql-production-114a.up.railway.app/results')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch');
         return res.json();
