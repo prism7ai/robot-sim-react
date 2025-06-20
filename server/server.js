@@ -6,7 +6,7 @@ const mysql = require('mysql2');
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN,
+  origin: 'https://robot-sim-react.vercel.app',
   methods: ['GET', 'POST'],
   credentials: true
 }));
