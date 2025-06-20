@@ -5,21 +5,18 @@ const { Pool } = require('pg');
 
 const app = express();
 
-// ✅ CORS for Vercel frontend
 app.use(cors({
-  origin: 'https://robot-sim-react.vercel.app',  // <-- this must match exactly
-  methods: ['GET', 'POST'],
-  credentials: true
+  origin: 'https://robot-sim-react.vercel.app',
+  methods: ['GET', 'POST']
 }));
+
 app.use(express.json());
 
-// ✅ PostgreSQL Pool using DATABASE_URL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// ✅ Save simulation result
 app.post('/save-path', async (req, res) => {
   const { algorithm, start, goal, obstacles, path, visitedCount, pathLength, timeTaken } = req.body;
 
@@ -47,10 +44,9 @@ app.post('/save-path', async (req, res) => {
   }
 });
 
-// ✅ Fetch results
 app.get('/results', async (req, res) => {
   try {
-    const result = await pool.query(`SELECT * FROM paths_new ORDER BY id DESC LIMIT 10`);
+    const result = await pool.query('SELECT * FROM paths_new ORDER BY id DESC LIMIT 10');
     res.json(result.rows);
   } catch (err) {
     console.error('❌ Fetch failed:', err);
@@ -60,5 +56,5 @@ app.get('/results', async (req, res) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`🚀 Backend running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

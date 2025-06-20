@@ -12,8 +12,7 @@ import { dijkstra } from './algorithms/dijkstra';
 
 export default function App() {
   const [gridSize] = useState(10);
-  const [grid, setGrid] = useState(() =>
-  Array.from({ length: 10 }, () => Array(10).fill(''))); 
+  const [grid, setGrid] = useState([]);
   const [start, setStart] = useState([0, 0]);
   const [goal, setGoal] = useState([9, 9]);
   const [obstacles, setObstacles] = useState([]);
@@ -23,7 +22,7 @@ export default function App() {
   const [visited, setVisited] = useState([]);
   const [metrics, setMetrics] = useState({ visitedCount: 0, pathLength: 0, timeTaken: 0 });
   const [resultsVersion, setResultsVersion] = useState(0);
-
+  const BACKEND_URL = 'https://robot-sim-react-production-7703.up.railway.app';
 
   const handleCellClick = (x, y) => {
     if (mode === 'start') setStart([x, y]);
@@ -63,7 +62,7 @@ export default function App() {
     animatePath(result.path || []);
 
     try {
-      await fetch(`https://postgres-production-c633.up.railway.app/save-path`, {
+      await fetch(`${BACKEND_URL}/save-path`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -77,8 +76,8 @@ export default function App() {
           timeTaken: elapsedTime
         })
       });
-      console.log('✅ Path saved to Railway MySQL');
       setResultsVersion(prev => prev + 1);
+      console.log('✅ Path saved to Railway PostgreSQL');
     } catch (err) {
       console.error('❌ Error saving path:', err);
     }
@@ -95,14 +94,10 @@ export default function App() {
       setGrid(() => {
         const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(''));
         for (const [ox, oy] of obstacles) newGrid[ox][oy] = 'obstacle';
-        if (Array.isArray(start)) newGrid[start[0]][start[1]] = 'start';
-        if (Array.isArray(goal)) newGrid[goal[0]][goal[1]] = 'goal';
-
-        const coords = path[i];
-        if (Array.isArray(coords)) {
-          const [x, y] = coords;
-          newGrid[x][y] = 'robot';
-        }
+        newGrid[start[0]][start[1]] = 'start';
+        newGrid[goal[0]][goal[1]] = 'goal';
+        const [x, y] = path[i];
+        newGrid[x][y] = 'robot';
         return newGrid;
       });
 
@@ -143,9 +138,7 @@ export default function App() {
 
   return (
     <div>
-      <h2 style={{ textAlign: 'center', marginTop: '20px' }}>
-        NAVX - Robot Pathfinding Simulator
-      </h2>
+      <h2 style={{ textAlign: 'center', marginTop: '20px' }}>NAVX - Robot Pathfinding Simulator</h2>
 
       <ControlPanel
         algo={algo}
