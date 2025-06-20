@@ -7,7 +7,9 @@ const app = express();
 
 // ✅ CORS for Vercel frontend
 app.use(cors({
-  origin: 'https://robot-sim-react.vercel.app'
+  origin: 'https://robot-sim-react.vercel.app',  // <-- this must match exactly
+  methods: ['GET', 'POST'],
+  credentials: true
 }));
 app.use(express.json());
 
