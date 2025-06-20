@@ -63,7 +63,7 @@ export default function App() {
     animatePath(result.path || []);
 
     try {
-      await fetch(`https://navx-backend-production.up.railway.app/save-path`, {
+      await fetch(`https://postgres-production-c633.up.railway.app/save-path`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
