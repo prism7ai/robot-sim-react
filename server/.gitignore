@@ -1,0 +1,8 @@
+# Ignore node_modules everywhere
+node_modules/
+
+# Ignore environment files
+.env
+
+# Do NOT ignore the server folder!
+# (No `server/` line here — remove it if present)
